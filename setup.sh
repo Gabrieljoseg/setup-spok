@@ -25,17 +25,14 @@ sudo install -o root -g root -m 0755 kubectl /usr/local/bin/kubectl
 curl -Lo minikube https://storage.googleapis.com/minikube/releases/latest/minikube-linux-amd64
 sudo install minikube /usr/local/bin/
 
-# Iniciar Minikube com driver Docker e 12GB de RAM
-minikube start --driver=docker --memory=12288
-
 minikube addons enable ingress
 
 minikube addons enable dns
 
-minikube restart  
+minikube update-context
 
-# Configurar kubectl  
-kubectl cluster-info 
+# Iniciar Minikube com driver Docker e 12GB de RAM
+minikube start --driver=docker --memory=12288 --v=7
 
 # Instalar Helm
 curl -fsSL -o get_helm.sh https://raw.githubusercontent.com/helm/helm/master/scripts/get-helm-3
@@ -95,17 +92,11 @@ kubectl port-forward svc/minio --address 0.0.0.0 --namespace minio-system 9000 &
 helm repo add apache-airflow https://airflow.apache.org
 helm install airflow apache-airflow/airflow --namespace airflow --create-namespace --set workers.resources.requests.memory="${airflow_memory}Gi"
 
-# Criar arquivo env com variáveis importantes
-cat << EOF > env.sh
 export MINIKUBE_IP=$(minikube ip)
-export MINIO_ROOT_USER=minio
-export MINIO_ROOT_PASSWORD=minio123
-EOF
 
-source env.sh
 
 # Iniciar Spark
-kubectl create -f spark-cluster.yaml
+clkubectl create -f spark-cluster.yaml --validate=false
 
 # Iniciar Airflow
 airflow_pod=$(kubectl get pods --namespace airflow -o jsonpath="{.items[0].metadata.name}")
